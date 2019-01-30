@@ -1,3 +1,4 @@
+# $Id$
 CMAKE_MINIMUM_REQUIRED(VERSION 2.6 FATAL_ERROR)
 
 SET(PACKAGE GD)
@@ -10,7 +11,6 @@ SET(CMAKE_MODULE_PATH "${GD_SOURCE_DIR}/cmake/modules")
 
 include(gd)
 
-OPTION(ENABLE_GD_FORMATS "Enable GD image formats" 0)
 OPTION(ENABLE_PNG "Enable PNG support" 0)
 OPTION(ENABLE_LIQ "Enable libimagequant support" 0)
 OPTION(ENABLE_JPEG "Enable JPEG support" 0)
@@ -31,24 +31,24 @@ endif(BUILD_TEST)
 IF(CMAKE_COMPILER_IS_GNUCC)
   SET(CMAKE_C_FLAGS_DEBUG "-g -Wall -Wextra -O0") # will be added to CMAKE_C_FLAGS when CMAKE_BUILD_TYPE is "Debug"
 ENDIF(CMAKE_COMPILER_IS_GNUCC)
-SET (CMAKE_LIBRARY_OUTPUT_DIRECTORY
-  ${PROJECT_BINARY_DIR}/Bin
-  CACHE PATH
-  "Single Directory for all Libraries"
+SET (CMAKE_LIBRARY_OUTPUT_DIRECTORY 
+  ${PROJECT_BINARY_DIR}/Bin 
+  CACHE PATH 
+  "Single Directory for all Libraries" 
   )
 
-# --------- Setup the Executable output Directory -------------
-SET (CMAKE_RUNTIME_OUTPUT_DIRECTORY
-  ${PROJECT_BINARY_DIR}/Bin
-  CACHE PATH
-  "Single Directory for all Executables."
+# --------- Setup the Executable output Directory ------------- 
+SET (CMAKE_RUNTIME_OUTPUT_DIRECTORY 
+  ${PROJECT_BINARY_DIR}/Bin 
+  CACHE PATH 
+  "Single Directory for all Executables." 
   )
 
-# --------- Setup the Executable output Directory -------------
-SET (CMAKE_ARCHIVE_OUTPUT_DIRECTORY
-  ${PROJECT_BINARY_DIR}/Bin
-  CACHE PATH
-  "Single Directory for all static libraries."
+# --------- Setup the Executable output Directory ------------- 
+SET (CMAKE_ARCHIVE_OUTPUT_DIRECTORY 
+  ${PROJECT_BINARY_DIR}/Bin 
+  CACHE PATH 
+  "Single Directory for all static libraries." 
   )
 
 if (USE_EXT_GD)
@@ -69,30 +69,14 @@ if (USE_EXT_GD)
 	endif (GD_FOUND)
 else (USE_EXT_GD)
 
-	MACRO(GV VER VAR)
-		execute_process(
-			COMMAND perl ${CMAKE_CURRENT_SOURCE_DIR}/config/getver.pl ${VER}
-			OUTPUT_VARIABLE ${VAR}
-		)
-	ENDMACRO(GV)
+	SET(GD_VERSION_MAJOR "2")
+	SET(GD_VERSION_MINOR "2")
+	SET(GD_VERSION_PATCH "5")
+	SET(GD_VERSION_EXTRA "")
+	SET(GD_VERSION "${GD_VERSION_MAJOR}.${GD_VERSION_MINOR}.${GD_VERSION_PATCH}${GD_VERSION_EXTRA}")
+	SET(GD_VERSION_STRING "${GD_VERSION}")
 
-	GV(MAJOR GDLIB_MAJOR)
-	GV(MINOR GDLIB_MINOR)
-	GV(RELEASE GDLIB_REVISION)
-	GV(EXTRA GDLIB_EXTRA)
-	SET(GDLIB_VERSION "${GDLIB_MAJOR}.${GDLIB_MINOR}.${GDLIB_REVISION}${GDLIB_EXTRA}")
-	MESSAGE(STATUS "gd version ${GDLIB_VERSION}")
-
-	MACRO(GV_LT VER VAR)
-		execute_process(
-			COMMAND sh ${CMAKE_CURRENT_SOURCE_DIR}/config/getlib.sh ${VER}
-			OUTPUT_VARIABLE ${VAR}
-		)
-	ENDMACRO(GV_LT)
-
-	GV_LT(SONAME GDLIB_LIB_SOVERSION)
-	GV_LT(VERSION GDLIB_LIB_VERSION)
-	MESSAGE(STATUS "gd shared lib version ${GDLIB_LIB_SOVERSION} (${GDLIB_LIB_VERSION})")
+	SET(GD_VERSION_INT "2020555")
 
 	SET(CMAKE_REQUIRED_INCLUDES "/usr/include" "/usr/local/include")
 
@@ -105,7 +89,7 @@ else (USE_EXT_GD)
 	if (ENABLE_PNG)
 		FIND_PACKAGE(PNG REQUIRED)
 	endif (ENABLE_PNG)
-
+	
 	if (ENABLE_ICONV)
 		FIND_PACKAGE(ICONV REQUIRED)
 	endif (ENABLE_ICONV)
@@ -144,8 +128,6 @@ else (USE_EXT_GD)
 		FIND_PACKAGE(FontConfig)
 	endif (ENABLE_FONTCONFIG)
 
-	SET(ENABLE_GD_FORMATS ${ENABLE_GD_FORMATS})
-
 	if (FREETYPE_FOUND)
 		INCLUDE_DIRECTORIES(${FREETYPE_INCLUDE_DIRS})
 		SET(HAVE_FT2BUILD_H 1)
@@ -166,7 +148,7 @@ else (USE_EXT_GD)
 		INCLUDE_DIRECTORIES(${PNG_INCLUDE_DIR})
 		SET(HAVE_LIBPNG 1)
 	ENDIF(PNG_FOUND)
-
+	
 	IF(ICONV_FOUND)
 		INCLUDE_DIRECTORIES(${ICONV_INCLUDE_DIR})
 		SET(HAVE_ICONV 1)
@@ -241,8 +223,13 @@ else (USE_EXT_GD)
 	add_subdirectory(src)
 endif (USE_EXT_GD)
 
-add_subdirectory(tests)
-add_subdirectory(examples)
+
+if (BUILD_TEST)
+	add_subdirectory(tests)
+endif(BUILD_TEST)
+if (BUILD_EXAMPLES)
+	add_subdirectory(examples)
+endif (BUILD_EXAMPLES)
 
 add_custom_target(distclean ${GD_SOURCE_DIR}/cmake/distclean.sh)
 
@@ -250,8 +237,8 @@ SET(CPACK_PACKAGE_NAME "libgd")
 SET(CPACK_PACKAGE_DESCRIPTION_SUMMARY "libGD, powerful and easy to use graphic library")
 SET(CPACK_PACKAGE_VENDOR "http://www.libgd.org")
 SET(CPACK_PACKAGE_VERSION_MAJOR "2")
-SET(CPACK_PACKAGE_VERSION_MINOR "1")
-SET(CPACK_PACKAGE_VERSION_PATCH "0")
+SET(CPACK_PACKAGE_VERSION_MINOR "2")
+SET(CPACK_PACKAGE_VERSION_PATCH "5")
 
 if(WIN32)
 	set(CPACK_GENERATOR ZIP)
@@ -264,28 +251,30 @@ IF (ENABLE_LIQ AND LIQ_BUILD)
     ADD_DEPENDENCIES(${GD_LIB_STATIC} libimagequant)
 ENDIF(ENABLE_LIQ AND LIQ_BUILD)
 
+if (BUILD_DOCS)
+	INSTALL(FILES docs/INSTALL DESTINATION share/docs)
+	INSTALL(FILES docs/README.JPN DESTINATION share/docs)
+	INSTALL(FILES docs/README.CMAKE DESTINATION share/docs)
+	INSTALL(FILES docs/README.TESTING DESTINATION share/docs)
+	INSTALL(FILES docs/README.TXT DESTINATION share/docs)
+endif (BUILD_DOCS)
 
-INSTALL(FILES docs/INSTALL DESTINATION share/docs)
-INSTALL(FILES docs/README.JPN DESTINATION share/docs)
-INSTALL(FILES docs/README.CMAKE DESTINATION share/docs)
-INSTALL(FILES docs/README.TESTING DESTINATION share/docs)
-INSTALL(FILES docs/README.TXT DESTINATION share/docs)
-
-
-INSTALL(FILES examples/arc.c DESTINATION share/docs)
-INSTALL(FILES examples/copyrotated.c DESTINATION share/docs)
-INSTALL(FILES examples/crop.c DESTINATION share/docs)
-INSTALL(FILES examples/flip.c DESTINATION share/docs)
-INSTALL(FILES examples/gif.c DESTINATION share/docs)
-INSTALL(FILES examples/nnquant.c DESTINATION share/docs)
-INSTALL(FILES examples/noIcon.pic DESTINATION share/docs)
-INSTALL(FILES examples/noIcon.sgi DESTINATION share/docs)
-INSTALL(FILES examples/noIcon.tga DESTINATION share/docs)
-INSTALL(FILES examples/noIconAlpha.tga DESTINATION share/docs)
-INSTALL(FILES examples/test_crop_threshold.png DESTINATION share/docs)
-INSTALL(FILES examples/tgaread.c DESTINATION share/docs)
-INSTALL(FILES examples/tiffread.c DESTINATION share/docs)
-INSTALL(FILES examples/windows.c DESTINATION share/docs)
+if (BUILD_EXAMPLES)
+	INSTALL(FILES examples/arc.c DESTINATION share/docs)
+	INSTALL(FILES examples/copyrotated.c DESTINATION share/docs)
+	INSTALL(FILES examples/crop.c DESTINATION share/docs)
+	INSTALL(FILES examples/flip.c DESTINATION share/docs)
+	INSTALL(FILES examples/gif.c DESTINATION share/docs)
+	INSTALL(FILES examples/nnquant.c DESTINATION share/docs)
+	INSTALL(FILES examples/noIcon.pic DESTINATION share/docs)
+	INSTALL(FILES examples/noIcon.sgi DESTINATION share/docs)
+	INSTALL(FILES examples/noIcon.tga DESTINATION share/docs)
+	INSTALL(FILES examples/noIconAlpha.tga DESTINATION share/docs)
+	INSTALL(FILES examples/test_crop_threshold.png DESTINATION share/docs)
+	INSTALL(FILES examples/tgaread.c DESTINATION share/docs)
+	INSTALL(FILES examples/tiffread.c DESTINATION share/docs)
+	INSTALL(FILES examples/windows.c DESTINATION share/docs)
+endif (BUILD_EXAMPLES)
 
 
 set(CPACK_RESOURCE_FILE_LICENSE "${CMAKE_SOURCE_DIR}/COPYING")
@@ -301,3 +290,4 @@ set(CPACK_SOURCE_IGNORE_FILES
 )
 install(FILES ${top_level_DOCFILES} DESTINATION ${DOC_DIR})
 INCLUDE(CPack)
+
